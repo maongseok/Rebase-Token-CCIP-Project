@@ -192,7 +192,7 @@ contract CrossChainTest is Test {
         ccipLocalSimulatorFork.switchChainAndRouteMessage(remoteFork);
 
         // uint256 receiverInterestRate = remoteToken.getUserInterestRate(receiver);
-
+        vm.selectFork(remoteFork);
         assertEq(remoteToken.balanceOf(receiver), receiverBalanceBefore + amountToBridge);
         // assertEq(receiverInterestRate, senderInterestRate);
     }
@@ -220,13 +220,14 @@ contract CrossChainTest is Test {
 
         ccipLocalSimulatorFork.requestLinkFromFaucet(
             receiver,
-            IRouterClient(localNetworkDetails.routerAddress).getFee(remoteNetworkDetails.chainSelector, message)
+            IRouterClient(localNetworkDetails.routerAddress).getFee(remoteNetworkDetails.chainSelector, message) * 10
         );
+        //
         vm.prank(receiver);
-        IERC20(localNetworkDetails.linkAddress).approve(
-            localNetworkDetails.routerAddress,
-            IRouterClient(localNetworkDetails.routerAddress).getFee(remoteNetworkDetails.chainSelector, message)
-        );
+        //* 10 to prevent recalculation of fee going up
+        IERC20(localNetworkDetails.linkAddress).approve(localNetworkDetails.routerAddress, type(uint64).max);
+        // IRouterClient(localNetworkDetails.routerAddress).getFee(remoteNetworkDetails.chainSelector, message) * 12
+        //     / 10
 
         vm.prank(receiver);
         IERC20(address(localToken)).approve(localNetworkDetails.routerAddress, amountToBridge);
@@ -246,12 +247,15 @@ contract CrossChainTest is Test {
         ccipLocalSimulatorFork.switchChainAndRouteMessage(remoteFork);
 
         uint256 senderInterestRate = remoteToken.getUserInterestRate(sender);
-
+        vm.selectFork(remoteFork);
         assertEq(remoteToken.balanceOf(sender), senderBalanceBefore + amountToBridge);
         assertEq(senderInterestRate, receiverInterestRate);
     }
+    /**
+     * @dev this function test from sender to receiver and back from receiver to sender
+     */
 
-    function testBridgeAllTokens() public {
+    function testBridgeAllTokensINAndBack() public {
         // configuring the token pool
         /**
          * @notice there's a reselection of fork network in the function
@@ -280,6 +284,7 @@ contract CrossChainTest is Test {
 
         assertEq(sepoliaToken.balanceOf(sender), SEND_VALUE);
 
+        // --- FIRST BRIDGE ---
         bridgeTokensToReceiver(
             SEND_VALUE,
             sepoliaFork,
@@ -289,11 +294,12 @@ contract CrossChainTest is Test {
             sepoliaToken,
             arbSepoliaToken
         );
-        // assertEq(arbSepoliaToken.balanceOf(receiver), SEND_VALUE);
-    }
+        assertEq(arbSepoliaToken.balanceOf(receiver), SEND_VALUE, "Receiver did not get tokens on Arbitrum");
 
-    function testBridgeAllTokensBack() public {
-        vm.selectFork(arbSepoliaFork);
+        vm.selectFork(sepoliaFork);
+        assertEq(sepoliaToken.balanceOf(sender), 0, "Sender tokens were not burned on sepolia");
+        // --- RETURN BRIDGE ---
+
         vm.warp(block.timestamp + 1 hours);
         bridgeTokensToSender(
             SEND_VALUE,
@@ -304,8 +310,9 @@ contract CrossChainTest is Test {
             arbSepoliaToken,
             sepoliaToken
         );
-        // assertEq(sepoliaToken.balanceOf(sender), SEND_VALUE);
-        assertEq(arbSepoliaToken.balanceOf(receiver), 0);
+        assertEq(sepoliaToken.balanceOf(sender), SEND_VALUE, "sender did not get tokens back on Sepolia");
+        vm.selectFork(arbSepoliaFork);
+        assertEq(arbSepoliaToken.balanceOf(receiver), 0, "Receiver's tokens were not burned on Arbitrum");
     }
 }
 // revise
