@@ -1,0 +1,20 @@
+# for reader
+# this just some problems addressed from bridgeToZksync.sh 
+# don't mind it hhh cause it's already solved
+# pushed just to remined me of the good old days 2072025
+
+
+
+forge script ./script/ConfigurePool.s.sol:ConfigurePoolScript --rpc-url ${SEPOLIA_RPC_URL} --account metamask --broadcast --sig "run(address,uint64,address,address,bool,uint128,uint128,bool,uint128,uint128)" 0xfF6772ac8c69F8742519F722Cb9eba7836e496Fd 6898391096552792247 0xFE80823600CA94d77ed7963996237622452cC474 0xF1f77DA35D399a3d88759f3dAd12aE1E89e11259 false 0 0 false 0 0
+forge script ./script/ConfigurePool.s.sol:ConfigurePoolScript --rpc-url ${SEPOLIA_RPC_URL} --account metamask --broadcast --sig "run(address,uint64,address,address,bool,uint128,uint128,bool,uint128,uint128)" ${SEPOLIA_POOL_ADDRESS} ${ZKSYNC_SEPOLIA_CHAIN_SELECTOR} ${ZKSYNC_POOL_ADDRESS} ${ZKSYNC_REBASE_TOKEN_ADDRESS} false 0 0 false 0 0
+
+1
+forge script ./script/BridgeTokens.s.sol:BridgeTokensScript --rpc-url ${SEPOLIA_RPC_URL} --account metamask --broadcast --sig "sendMessage(address,uint64,address,uint256,address,address)" $(cast wallet address --account metamask) ${ZKSYNC_SEPOLIA_CHAIN_SELECTOR} 0x5ea42735cB3e7553f28F351f564686929de512BB ${AMOUNT} ${SEPOLIA_LINK_ADDRESS} ${SEPOLIA_ROUTER}
+
+
+
+
+forge script ./script/Deployer.s.sol:SetPermissions --rpc-url ${SEPOLIA_RPC_URL} --account metamask --broadcast --sig "grantRole(address,address)" 0x5ea42735cB3e7553f28F351f564686929de512BB 0xfF6772ac8c69F8742519F722Cb9eba7836e496Fd
+forge script ./script/Deployer.s.sol:SetPermissions --rpc-url ${SEPOLIA_RPC_URL} --account metamask --broadcast --sig "setAdmin(address,address)" 0x5ea42735cB3e7553f28F351f564686929de512BB 0xfF6772ac8c69F8742519F722Cb9eba7836e496Fd
+
+cast send  0xFE80823600CA94d77ed7963996237622452cC474  --rpc-url ${ZKSYNC_SEPOLIA_RPC_URL} --account metamask "applyChainUpdates(uint64[],(uint64,bytes[],bytes,(bool,uint128,uint128),(bool,uint128,uint128))[])" "[]" "[(16015286601757825753,[$(cast abi-encode "f(address)" 0xfF6772ac8c69F8742519F722Cb9eba7836e496Fd)],$(cast abi-encode "f(address)" 0x5ea42735cB3e7553f28F351f564686929de512BB),(false,0,0),(false,0,0))]"

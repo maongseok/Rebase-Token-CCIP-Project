@@ -1,0 +1,18 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+
+
+remappings = [
+    '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts',
+    '@chainlink/contracts/=lib/chainlink/contracts',
+    '@chainlink/local/=lib/chainlink-local',
+]
+
+#rpc_endpoints = { sepolia-eth = "", arb-sepolia = "" }
+[rpc_endpoints]
+sepolia-eth = "${SEPOLIA_RPC_URL}"
+sepolia-arb = "${ARBITRUM_SEPOLIA_RPC_URL}"
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
